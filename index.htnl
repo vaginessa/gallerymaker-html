@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>gmv</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        input {
+            margin: 2px;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            overflow: hidden;
+        }
+
+        main {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /*  MAIN ==================================================================================================== */
+
+        article {
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            padding: 5px;
+            width: calc(100vw - 260px);
+            will-change: transform;
+        }
+
+        .bg-dark {
+            background-color: #3a3a3a;
+        }
+
+        .thumb {
+            width: 150px;
+            height: 150px;
+            margin: 2px;
+            border: 1px solid #cccccc;
+            padding: 2px;
+        }
+
+        .edit-mode .thumb.selected {
+            border: 4px solid red;
+        }
+
+        #imgPreview {
+            max-height: 90vh;
+            max-width: 50vw;
+            position: absolute;
+            left: 250px;
+            top: 5px;
+            border: 2px solid #cccccc;
+            overflow: auto;
+            box-shadow: 4px 4px 8px #000000;
+            background-color: #ffffff;
+        }
+
+        .bg-dark #imgPreview {
+            background-color: #3a3a3a;
+        }
+
+        #imgPreview > img {
+            width: 100%;
+            display: block;
+        }
+
+        .img-features {
+            display: none;
+        }
+
+        .edit-mode .img-features {
+            display: inline-block;
+            background-color: #38ee44;
+            font-size: 16px;
+        }
+
+        /*  NAV ===================================================================================================== */
+
+        nav {
+            padding: 5px;
+            width: 260px;
+            background-color: #e8eef1;
+        }
+
+        .nav-group {
+            background-color: #c9d8e3;
+            padding: 4px;
+            display: inline-block;
+            line-height: 2em;
+            float: left;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .nav-group > span {
+            vertical-align: middle;
+            font-size: 11px;
+        }
+
+        .color {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            margin: 0 2px;
+        }
+
+        .color.light {
+            background-color: #ffffff;
+        }
+
+        .color.dark {
+            background-color: #515151;
+        }
+
+        button, .toggle > span {
+            padding: 3px 5px;
+            background-color: #a8d3ee;
+            border: 1px solid #929292;
+
+            outline: none;
+            border-radius: 2px;
+        }
+
+        .toggle > input[data-id="feature"] + span {
+
+        }
+
+        button {
+            background-color: #8dd0ee;
+        }
+
+        button:hover {
+            background-color: #b6dcee;
+        }
+
+        input {
+            outline: none;
+        }
+
+        #txt-path {
+            width: 100%;
+            background: none;
+            border: 1px solid #cccccc;
+            color: #00ACEE;
+        }
+
+        .toggle input {
+            display: none;
+        }
+
+        .toggle input:checked + span {
+            background-color: #00ACEE;
+            color: #ffffff;
+        }
+
+        .spacer:before {
+            content: "/";
+            display: inline-block;
+            margin: 0 2px;
+            font-size: 16px;
+            color: #00ACEE;
+        }
+
+        /*  TREEVIEW ================================================================================================ */
+
+        .treeview {
+        / / padding-top: 30 px;
+        }
+
+        .treeview ul {
+            list-style: none;
+            padding-left: 16px;
+            cursor: default;
+
+        }
+
+        .treeview ul {
+            user-select: none;
+            display: none;
+        }
+
+        .treeview > ul {
+            display: block;
+        }
+
+        .tree-item_name {
+            display: inline-block;
+            min-width: 10px;
+            pointer-events: none;
+        }
+
+        .tree-item_name.selected {
+            color: #00ACEE;
+        }
+
+        .treeview input {
+            display: none;
+        }
+
+        .treeview input:checked ~ ul {
+            display: block;
+
+        }
+
+        .treeview label {
+            padding: 1px;
+            margin-right: 2px;
+            width: 12px;
+            line-height: .7;
+            border: 1px solid #cccccc;
+            display: inline-block;
+            text-align: center;
+            font-size: .8em;
+        }
+
+        .treeview label:before {
+            content: "+";
+        }
+
+        .treeview input:checked + label:before {
+            content: "-";
+        }
+
+        .hidden {
+            display: none;
+        }
+
+
+    </style>
+
+</head>
+<body>
+
+<main>
+    <nav id="nav">
+        <span class="nav-group">
+            <button data-id="btn-openDir">Open</button>
+            <button data-id="btn-save">Save</button>
+            <input type="file" webkitdirectory hidden id="inp-openDir">
+            <input type="file" hidden id="inp-save">
+            <span class="spacer"></span>
+            <label class="toggle">
+                <input type="radio" name="rg" data-id="mode-view" checked>
+                <span>View</span>
+            </label>
+            <label class="toggle">
+                <input type="radio" name="rg" data-id="mode-edit">
+                <span>Edit</span>
+            </label>
+            <span class="spacer"></span>
+            <span class="color light" data-id="bg-light"></span>
+            <span class="color dark" data-id="bg-dark"></span>
+        </span>
+        <div>
+            <label>
+                <input id="range-size" type="range" min="50" max="400" step="25" value="200" data-id="thumb-size">
+                <span id="range-txt"></span>
+            </label>
+        </div>
+        <div>
+            <label><input type="text" id="txt-path"></label>
+        </div>
+        <div>
+            <button data-id="show-unmarked">unmarked</button>
+            <button data-id="show-marked">marked</button>
+            <button data-id="select-all">select all</button>
+        </div>
+        <div class="features nav-group"></div>
+        <div id="tree-stats"></div>
+        <div class="treeview" id="tree"></div>
+    </nav>
+    <article id="mainView"></article>
+</main>
+<aside id="imgPreview"></aside>
+
+<script>
+
+    window.onload = function () {
+
+        let $ = function (id) {
+            return document.getElementById(id);
+        };
+
+        function Img(path) {
+            this.path = path;
+            this.symLink = "root/" + path;
+            this.features = [];
+        }
+
+
+        let elTree = $("tree");
+        let elNav = $("nav");
+        let elMainView = $("mainView");
+        let elImgViewer = $("imgPreview");
+        let elSelectedNavItem;
+        let elsFeature = [];
+
+
+        let list = [];
+        let imgs = [];
+        let imgMap = {};
+        let size = $("range-size").value;
+
+
+        let mode = "view";
+        let symlink = undefined;
+        let filters = [];
+        let features = ["❤", "s", "3/4", "f", "t", "u", "d"];
+
+        let shiftKeyDown = false;
+
+
+        elNav.addEventListener("click", navHandler);
+        $("inp-openDir").addEventListener("change", parseDir);
+        $("inp-save").addEventListener("change", save);
+        elMainView.addEventListener("click", imgSelect);
+        elTree.addEventListener("click", treeSelectHandler);
+
+
+        let elFeatures = elNav.querySelector(".features");
+        let str = "";
+        for (let i = 0; i < features.length; i++) {
+            str += getToggleBtn(features[i], `data-id="feature" data-feature="${features[i]}"`);
+        }
+
+
+        $("tree-stats").innerHTML = `<span>${getToggleBtn("+", "data-id='expand-tree'")}</span><span id="num-selected">0</span>`;
+
+        elFeatures.innerHTML = str;
+        elsFeature = elNav.querySelectorAll("input[data-id='feature']");
+
+        elImgViewer.classList.add("hidden");
+
+        elImgViewer.addEventListener("click", () => {
+            elImgViewer.innerHTML = "";
+            elImgViewer.classList.add("hidden");
+        });
+
+
+        document.addEventListener("keydown", (e) => {
+
+            if (e.key === "Shift") shiftKeyDown = true;
+
+            else if (e.key === "Escape") {
+                elImgViewer.classList.add("hidden");
+                elImgViewer.innerHTML = "";
+            }
+        });
+
+
+        document.addEventListener("keyup", (e) => {
+            if (e.key === "Shift") shiftKeyDown = false;
+        });
+
+        $("range-txt").innerText = size;
+
+        /* ============================================================================================================
+         NAV EVENTS
+         ============================================================================================================ */
+
+        function navHandler(e) {
+
+            let id = e.target.getAttribute("data-id");
+
+            if (!id) return;
+
+
+            switch (id) {
+
+                case ("btn-openDir") :
+                    $("inp-openDir").click();
+                    break;
+
+                case ("btn-save") :
+                    //$("inp-save").click();
+                    save();
+                    break;
+
+                case ("mode-edit") :
+                    mode = "edit";
+                    elMainView.classList.add("edit-mode");
+                    break;
+
+                case ("mode-view") :
+                    mode = "view";
+                    elMainView.classList.remove("edit-mode");
+                    break;
+
+                case ("bg-dark") :
+                    document.body.classList.add("bg-dark");
+                    break;
+
+                case ("bg-light") :
+                    document.body.classList.remove("bg-dark");
+                    break;
+
+                case ("thumb-size") :
+                    size = e.target.value;
+                    $("range-txt").innerText = size;
+                    render();
+                    break;
+
+
+                case ("feature") :
+                    setFeatures();
+                    break;
+
+                case ("expand-tree") :
+                    let cbs = elTree.querySelectorAll("input");
+                    for (let i = 0; i < cbs.length; i++) {
+                        cbs[i].checked = e.target.checked;
+                    }
+                    break;
+
+                case "show-unmarked":
+                    renderUnmarked(false);
+                    break;
+
+                case "show-marked":
+                    renderUnmarked(true);
+                    break;
+
+                case "select-all":
+                    selectAll();
+                    break;
+
+            }
+
+        }
+
+
+        function treeSelectHandler(e) {
+
+            let el = e.target;
+
+
+            let link = el.getAttribute("data-link");
+            if (!link) return;
+
+            if (elSelectedNavItem) {
+                elSelectedNavItem.classList.remove("selected");
+            }
+            elSelectedNavItem = e.target.querySelector(".tree-item_name");
+            elSelectedNavItem.classList.add("selected");
+            symlink = link;
+            unsetFilters();
+            render();
+
+        }
+
+
+        function setFeatures() {
+
+            if (mode === "edit") {
+
+                let _features = [];
+
+                for (let i = 0; i < elsFeature.length; i++) {
+                    if (elsFeature[i].checked) _features.push(elsFeature[i].getAttribute("data-feature"));
+                }
+
+
+                let els = elMainView.querySelectorAll(".selected");
+
+                for (let i = 0; i < els.length; i++) {
+                    let el = els[i];
+                    let img = imgMap[el.getAttribute("data-id")];
+                    img.features = _features.concat();
+                    el.querySelector(".img-features").innerText = img.features.join(" ");
+                }
+
+
+            } else {
+                filters = [];
+                for (let i = 0; i < elsFeature.length; i++) {
+                    if (elsFeature[i].checked) filters.push(elsFeature[i].getAttribute("data-feature"));
+                }
+                symlink = undefined;
+                if (elSelectedNavItem) {
+                    elSelectedNavItem.classList.remove("selected");
+                }
+                render();
+            }
+
+        }
+
+        function unsetFilters() {
+            if (filters.length > 0) {
+                for (let i = 0; i < elsFeature.length; i++) {
+                    elsFeature[i].checked = false;
+                }
+            }
+            filters = [];
+        }
+
+
+        /* ============================================================================================================
+         IMG SELECT
+         ============================================================================================================ */
+
+        function imgSelect(e) {
+
+            let id = e.target.getAttribute("data-id");
+            if (!id) return;
+
+            let img = imgMap[id];
+            let el = e.target;
+
+            $("txt-path").value = img.path;
+
+            /// VIEW MODE ---------------------------------------
+            if (mode === "view") {
+                elImgViewer.innerHTML = `<img src="${img.path}">`;
+                elImgViewer.classList.remove("hidden");
+
+            }
+            /// EDIT MODE --------------------------------------
+            else {
+                toggleSelection(el);
+
+                let features = [];
+                let selectedEls = elMainView.querySelectorAll(".selected");
+
+                for (let i = 0; i < elsFeature.length; i++) {
+                    if (selectedEls.length === 1) {
+
+                        elsFeature[i].checked = img.features.indexOf(elsFeature[i].getAttribute("data-feature")) > -1;
+
+
+                    } else {
+                        unsetFilters();
+                    }
+
+                }
+
+            }
+
+        }
+
+
+        function toggleSelection(el) {
+
+            if (!shiftKeyDown) deselectAll();
+
+            if (el.classList.contains("selected")) {
+                el.classList.remove("selected");
+            } else {
+                el.classList.add("selected");
+
+            }
+            $("num-selected").textContent = elMainView.querySelectorAll(".selected").length + "";
+        }
+
+        function deselectAll() {
+
+            let els = elMainView.querySelectorAll(".selected");
+            for (let i = 0; i < els.length; i++) {
+                els[i].classList.remove("selected");
+            }
+
+            $("num-selected-tree").textContent = "0";
+        }
+
+
+        function selectAll() {
+
+            let els = elMainView.querySelectorAll("div");
+            for (let i = 0; i < els.length; i++) {
+                els[i].classList.add("selected");
+            }
+
+            $("num-selected").textContent = els.length + "";
+        }
+
+
+        /* ============================================================================================================
+         TREE PARSING
+         ============================================================================================================ */
+        function parseDir(e) {
+
+            let files = e.target.files;
+            list = [];
+            imgs = [];
+            imgMap = {};
+
+            let shouldLoadDATA = false;
+
+            for (let i = 0; i < files.length; i++) {
+                let f = files[i];
+
+                if (f.name.match(/.jpg|.jpeg|.png/i)) {
+                    let path = f.webkitRelativePath;
+                    let pathArr = path.split("/");
+                    pathArr.shift();
+                    let img = new Img(pathArr.join("/"));
+                    list.push(pathArr.join("/"));
+                    imgs.push(img);
+                    imgMap[img.symLink] = img;
+                }
+
+
+                if (f.name === "___db.js") {
+                    shouldLoadDATA = true;
+                }
+            }
+
+            list.sort(sortList);
+
+            if (shouldLoadDATA) {
+                let script = document.createElement("script");
+                script.src = "___db.js";
+                script.id = "___db";
+
+                script.onload = function () {
+
+                    for (let i = 0; i < imgs.length; i++) {
+                        let obj = imgs[i];
+                        if (___DATA.hasOwnProperty(obj.symLink)) {
+                            imgs[i] = ___DATA[obj.symLink];
+                            imgMap[obj.symLink] = imgs[i];
+                        }
+                    }
+                    ___DATA = undefined;
+                    document.head.removeChild($("___db"));
+                };
+                document.head.appendChild(script);
+            }
+
+
+            let tree = list.reduce(function (hier, path) {
+                let x = hier;
+                path.split('/').forEach(function (item) {
+                    if (!x[item]) {
+                        x[item] = {};
+                    }
+                    x = x[item];
+                });
+                x.path = path;
+                return hier;
+            }, {});
+
+
+            elTree.innerHTML = `<ul><li data-link="root">
+            <input type="checkbox" checked id="000">
+            <label for="000"></label><span class="tree-item_name">_root (${imgs.length})</span> /
+            <span id="num-selected-tree">0</span>${makeTree(tree)}</ul>`;
+
+        }
+
+
+        /// MAKE TREE -----------------------------------------------
+
+        let id = 0;
+
+        function makeTree(tree, link = "root") {
+            let str = "<ul>";
+            let dirs = Object.keys(tree);
+            dirs.forEach(function (dir) {
+                id++;
+                let path = tree[dir].path;
+                if (!path) {
+                    let symlink = link + "/" + dir;
+                    str += `<li class="folder" data-link="${symlink}">
+                            <input type="checkbox" id="${id}"><label for="${id}"></label>
+                            <span class="tree-item_name">${dir}</span>`;
+                    str += makeTree(tree[dir], symlink);
+                    str += '</li>\n';
+                }
+            });
+
+            str += "</ul>";
+            return str;
+        }
+
+
+        function sortList(a, b) {
+            if (a.path > b.path) return 1;
+            else if (a.path < b.path) return -1;
+            return -1;
+        }
+
+        /* ============================================================================================================
+         RENDER
+         ============================================================================================================ */
+
+        function render() {
+            let str = "";
+            deselectAll();
+            let count = 0;
+            // DIR SELECTED
+            if (symlink) {
+                for (let i = 0; i < imgs.length; i++) {
+                    let img = imgs[i];
+                    if (img.symLink.indexOf(symlink) === 0) {
+                        str += getThumbStr(img);
+                        count++;
+                    }
+                }
+            }
+            // FILTER SELECTED
+            else if (filters.length > 0) {
+                for (let i = 0; i < imgs.length; i++) {
+                    let img = imgs[i];
+                    if (compareArrs(filters, img.features) === 1) {
+                        str += getThumbStr(img);
+                        count++;
+                    }
+                }
+            }
+
+            $("num-selected-tree").textContent = count + "";
+            elMainView.innerHTML = str;
+        }
+
+
+        function renderUnmarked(marked = false) {
+            $("num-selected").textContent = "0";
+            let str = "";
+            let count = 0;
+            for (let i = 0; i < imgs.length; i++) {
+                let img = imgs[i];
+                if (!marked) {
+                    if (img.features.length === 0) {
+                        str += getThumbStr(img);
+                        count++;
+                    }
+                } else {
+                    if (img.features.length > 0) {
+                        str += getThumbStr(img);
+                        count++;
+                    }
+                }
+            }
+            $("num-selected-tree").textContent = count + "";
+            elMainView.innerHTML = str;
+        }
+
+        function compareArrs(a, b) {
+
+            if (a.length > b.length) return -1;
+
+            a.sort();
+            b.sort();
+
+            for (let i = 0; i < a.length; i++) {
+                if (b.indexOf(a[i]) === -1) return -1;
+            }
+
+            return 1;
+        }
+
+
+        function getThumbStr(img) {
+            let features = '<span class="img-features"></span>';
+            if (img.features.length > 0) {
+                features = `<span class="img-features">${img.features.join(" ")}</span>`
+            }
+
+            return `<div data-id="${img.symLink}" class="thumb"
+                style="background: url('${img.path}');
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+                width: ${size}px; height: ${size}px;">
+                ${features}
+            </div>`;
+        }
+
+        function getToggleBtn(title, data) {
+            return `<label class="toggle l-feature">
+                        <input type="checkbox" ${data}>
+                        <span>${title}</span>
+                        </label>`;
+        }
+
+        /* ============================================================================================================
+         SAVE
+         ============================================================================================================ */
+
+        function save(e) {
+            let str = "___DATA=" + JSON.stringify(imgMap);
+            var pom = document.createElement('a');
+            pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(str));
+            pom.setAttribute('download', "___db.js");
+            pom.click();
+        }
+
+
+    };
+
+
+</script>
+
+
+</body>
+</html>
